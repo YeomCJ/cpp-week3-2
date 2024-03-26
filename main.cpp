@@ -1,3 +1,4 @@
+#include <iostream>
 #include "console.h"
 #include <cstdlib>
 #include <ctime>
@@ -8,7 +9,7 @@ using namespace std;
 // 맵의 크기 (최소 4, 최대 20)
 #define BOARD_SIZE 20
 // 뱀이 움직이는 딜레이
-#define MOVE_DELAY 15
+#define MOVE_DELAY 5
 
 // 문자열 상수 정의
 #define WALL_VERTICAL_STRING u8"┃"
@@ -56,7 +57,6 @@ Direction direction = Direction::RIGHT;
 
 // 게임 초기화 함수
 void initializeGame() {
-    // 랜덤 시드 설정
     
     // 뱀의 초기 위치 설정 (맵의 중앙)
     snake.x = BOARD_SIZE / 2;
@@ -74,6 +74,17 @@ void initializeGame() {
     console::clear();
 }
 
+//겹치는지 확인
+bool isSnakeOnPosition(int x, int y) {
+    // 뱀의 위치와 겹치는지 확인
+    if (snake.x == x && snake.y == y)
+        return true;
+    for (int i = 0; i < snakeLength; ++i) {
+        if (snakeBody[i].x == x && snakeBody[i].y == y)
+            return true;
+    }
+    return false;
+}
 // 사과 생성 함수
 void generateApple() {
     appleExists = true;
@@ -81,11 +92,13 @@ void generateApple() {
         // 랜덤한 위치에 사과 생성
         appleX = std::rand() % (BOARD_SIZE - 2) + 1;
         appleY = std::rand() % (BOARD_SIZE - 2) + 1;
-    } while (snake.x == appleX && snake.y == appleY);
+    } while (isSnakeOnPosition(appleX, appleY));
 }
 
 
 void moveSnake() {
+
+    int moveCount = 0;
     // 이전 뱀 위치 저장
     Snake prevHead = snake;
     Snake newHead = snake;
@@ -106,6 +119,7 @@ void moveSnake() {
             break;
     }
 
+    moveCount++;
     // 뱀의 머리가 맵의 범위를 벗어나면 게임 오버
     
 
