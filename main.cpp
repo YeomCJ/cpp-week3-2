@@ -3,10 +3,12 @@
 #include <ctime>
 #include <cstring>
 
+using namespace std;
+
 // 맵의 크기 (최소 4, 최대 20)
 #define BOARD_SIZE 10
 // 뱀이 움직이는 딜레이
-#define MOVE_DELAY 30
+#define MOVE_DELAY 15
 
 // 문자열 상수 정의
 #define WALL_VERTICAL_STRING u8"┃"
@@ -18,6 +20,7 @@
 #define SNAKE_STRING u8"■"
 #define SNAKE_BODY_STRING u8"■"
 #define APPLE_STRING u8"●"
+#define MAX_SNAKE_LENGTH (BOARD_SIZE * BOARD_SIZE)
 
 // 게임 상태 열거형
 enum class GameState {
@@ -38,6 +41,9 @@ bool appleExists = false;
 int appleX, appleY;
 GameState gameState = GameState::PLAYING;
 
+Snake snakeBody[BOARD_SIZE * BOARD_SIZE];
+int snakeLength = 1;
+
 // 뱀의 이동 방향 열거형
 enum class Direction {
     UP,
@@ -46,7 +52,7 @@ enum class Direction {
     RIGHT
 };
 
-Direction direction = Direction::UP;
+Direction direction = Direction::RIGHT;
 
 // 게임 초기화 함수
 void initializeGame() {
@@ -58,7 +64,10 @@ void initializeGame() {
     snake.y = BOARD_SIZE / 2;
 
     // 초기 뱀의 방향 설정
-    direction = Direction::UP;
+    direction = Direction::RIGHT;
+
+    snakeLength = 1;
+    snakeBody[0] = snake;
 
     // 초기화를 위한 화면 클리어
     console::clear();
@@ -75,33 +84,57 @@ void generateApple() {
 }
 
 
-// 뱀 이동 함수
 void moveSnake() {
     // 이전 뱀 위치 저장
-    int prevX = snake.x;
-    int prevY = snake.y;
+    Snake prevHead = snake;
+    Snake newHead = snake;
 
-    // 이동 방향에 따라 뱀의 위치 조정
+    // 이동 방향에 따라 뱀의 머리 위치 조정
     switch (direction) {
         case Direction::UP:
-            snake.y--;
+            newHead.y--;
             break;
         case Direction::DOWN:
-            snake.y++;
+            newHead.y++;
             break;
         case Direction::LEFT:
-            snake.x--;
+            newHead.x--;
             break;
         case Direction::RIGHT:
-            snake.x++;
+            newHead.x++;
             break;
+    }
+
+    // 뱀의 머리가 맵의 범위를 벗어나면 게임 오버
+    if (newHead.x < 0 || newHead.x >= BOARD_SIZE  || newHead.y < 0 || newHead.y >= BOARD_SIZE ) {
+        gameState = GameState::GAMEOVER;
+        return;
+    }
+
+    // 뱀의 머리가 자신의 몸통과 겹치면 게임 오버
+    for (int i = 0; i < snakeLength; ++i) {
+        if (newHead.x == snakeBody[i].x && newHead.y == snakeBody[i].y) {
+            gameState = GameState::GAMEOVER;
+            return;
+        }
     }
 
     // 사과를 먹었을 경우
-    if (snake.x == appleX && snake.y == appleY) {
+    if (newHead.x == appleX && newHead.y == appleY) {
         score += 10;
         generateApple();
+        // 뱀의 길이 증가
+        if (snakeLength < MAX_SNAKE_LENGTH)
+            snakeLength++;
     }
+
+    // 뱀의 머리 위치 갱신
+    snake = newHead;
+
+    // 뱀의 몸통 갱신
+    for (int i = snakeLength - 1; i > 0; --i)
+        snakeBody[i] = snakeBody[i - 1];
+    snakeBody[0] = snake;
 }
 
 // 게임 오버 조건 확인 함수
@@ -130,16 +163,18 @@ bool isWin() {
 
 // 게임 오버 텍스트 출력 함수
 void drawGameOver() {
-    int x = (console::SCREEN_WIDTH - strlen("Game Over!")) / 2;
-    int y = console::SCREEN_HEIGHT / 2;
-    console::draw(x, y, "Game Over!");
+    int x = (BOARD_SIZE/2);
+    int y = BOARD_SIZE/2;
+    console::draw(x - (strlen("Game Over!") /2), y, "Game Over!");
+    console::draw(x - (strlen("Try again?(Enter)") /2),y+1,"Try again?(Enter)");
 }
 
 // 게임 승리 텍스트 출력 함수
 void drawWin() {
-    int x = (console::SCREEN_WIDTH - strlen("You Win!")) / 2;
-    int y = console::SCREEN_HEIGHT / 2;
-    console::draw(x, y, "You Win!");
+    int x = (BOARD_SIZE/2);
+    int y = BOARD_SIZE/2;
+    console::draw(x - (strlen("You Win!") /2), y, "You Win!");
+    console::draw(x - (strlen("Try again?(Enter)") /2),y+1,"Try again?(Enter)");
 }
 
 
@@ -169,17 +204,29 @@ void drawBoard() {
         console::draw(0, i, WALL_VERTICAL_STRING);
         console::draw(BOARD_SIZE - 1, i, WALL_VERTICAL_STRING);
     }
+
+    console::draw(appleX, appleY, APPLE_STRING);
+
+    console::draw(snake.x, snake.y, SNAKE_STRING);
+
+    string s = "Score: " + to_string(score);
+    console::draw((BOARD_SIZE - s.length())/2,BOARD_SIZE, s);
+    
+
 }
 
 // 게임 상태에 따라 게임 화면 출력 함수
 void drawGame() {
     console::clear();
-
+    if (!appleExists)
+        generateApple();
     // 맵 테두리 출력
     drawBoard();
 
+    console::draw(snake.x,snake.y, " ");
     // 뱀 이동
     moveSnake();
+    console::draw(snake.x,snake.y, SNAKE_STRING);
 }
 
 void gameLoop() {
@@ -194,7 +241,7 @@ void gameLoop() {
         else if (console::key(console::Key::K_RIGHT) && direction != Direction::LEFT)
             direction = Direction::RIGHT;
         else if (console::key(console::Key::K_ESC)) {
-            console::cls();
+            exit(0);
             break;
         }
 
@@ -205,18 +252,28 @@ void gameLoop() {
         if (isGameOver()) {
             gameState = GameState::GAMEOVER;
             drawGameOver();
-            console::wait();
-            if (console::key(console::Key::K_ENTER)) {
-                gameState = GameState::PLAYING;
-                initializeGame();
+            while (true) {
+                
+                if (console::key(console::Key::K_ESC)) exit(0);
+                if (console::key(console::Key::K_ENTER)) {
+                    gameState = GameState::PLAYING;
+                    initializeGame();
+                    break;
+                }
+                console::wait();
             }
         } else if (isWin()) {
             gameState = GameState::WIN;
             drawWin();
-            console::wait();
-            if (console::key(console::Key::K_ENTER)) {
-                gameState = GameState::PLAYING;
-                initializeGame();
+            while (true) {
+                
+                if (console::key(console::Key::K_ESC)) exit(0);
+                if (console::key(console::Key::K_ENTER)) {
+                    gameState = GameState::PLAYING;
+                    initializeGame();
+                    break;
+                }
+                console::wait();
             }
         }
 
