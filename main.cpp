@@ -6,7 +6,7 @@
 using namespace std;
 
 // 맵의 크기 (최소 4, 최대 20)
-#define BOARD_SIZE 10
+#define BOARD_SIZE 20
 // 뱀이 움직이는 딜레이
 #define MOVE_DELAY 15
 
@@ -57,8 +57,7 @@ Direction direction = Direction::RIGHT;
 // 게임 초기화 함수
 void initializeGame() {
     // 랜덤 시드 설정
-    std::srand(std::time(nullptr));
-
+    
     // 뱀의 초기 위치 설정 (맵의 중앙)
     snake.x = BOARD_SIZE / 2;
     snake.y = BOARD_SIZE / 2;
@@ -68,6 +67,8 @@ void initializeGame() {
 
     snakeLength = 1;
     snakeBody[0] = snake;
+
+    score = 0;
 
     // 초기화를 위한 화면 클리어
     console::clear();
@@ -106,18 +107,10 @@ void moveSnake() {
     }
 
     // 뱀의 머리가 맵의 범위를 벗어나면 게임 오버
-    if (newHead.x < 0 || newHead.x >= BOARD_SIZE  || newHead.y < 0 || newHead.y >= BOARD_SIZE ) {
-        gameState = GameState::GAMEOVER;
-        return;
-    }
+    
 
     // 뱀의 머리가 자신의 몸통과 겹치면 게임 오버
-    for (int i = 0; i < snakeLength; ++i) {
-        if (newHead.x == snakeBody[i].x && newHead.y == snakeBody[i].y) {
-            gameState = GameState::GAMEOVER;
-            return;
-        }
-    }
+  
 
     // 사과를 먹었을 경우
     if (newHead.x == appleX && newHead.y == appleY) {
@@ -140,13 +133,16 @@ void moveSnake() {
 // 게임 오버 조건 확인 함수
 bool isGameOver() {
     // 맵 밖으로 나갔을 경우
-    if (snake.x < 0 || snake.x >= BOARD_SIZE || snake.y < 0 || snake.y >= BOARD_SIZE)
+    if (snake.x <= 0 || snake.x >= BOARD_SIZE - 1 || snake.y <= 0 || snake.y >= BOARD_SIZE - 1)
         return true;
 
     // 뱀이 자신의 몸통과 겹친 경우
     // (현재는 단일 뱀이므로 머리와 꼬리만 체크)
-    if (snake.x == 0 && snake.y == 0)
-        return true;
+    for (int i = 1; i < snakeLength; ++i) {
+        if (snake.x == snakeBody[i].x && snake.y == snakeBody[i].y) {
+            return true;
+        }
+    }
 
     return false;
 }
@@ -180,12 +176,8 @@ void drawWin() {
 
 // 맵 테두리 출력 함수
 void drawBoard() {
+    
     // 테두리 상단
-    console::draw(0, 0, WALL_LEFT_TOP_STRING);
-    for (int i = 1; i < BOARD_SIZE - 1; ++i) {
-        console::draw(i, 0, WALL_HORIZONTAL_STRING);
-    }
-       // 테두리 상단
     console::draw(0, 0, WALL_LEFT_TOP_STRING);
     for (int i = 1; i < BOARD_SIZE - 1; ++i) {
         console::draw(i, 0, WALL_HORIZONTAL_STRING);
@@ -207,8 +199,12 @@ void drawBoard() {
 
     console::draw(appleX, appleY, APPLE_STRING);
 
+    // 뱀의 몸통 출력
+    for (int i = 1; i < snakeLength; ++i)
+        console::draw(snakeBody[i].x, snakeBody[i].y, SNAKE_BODY_STRING);
     console::draw(snake.x, snake.y, SNAKE_STRING);
 
+   
     string s = "Score: " + to_string(score);
     console::draw((BOARD_SIZE - s.length())/2,BOARD_SIZE, s);
     
@@ -287,6 +283,9 @@ void gameLoop() {
 int main() {
     // 게임 초기화
     console::init();
+    std::srand(std::time(nullptr));
+
+
     initializeGame();
 
     // 게임 루프
