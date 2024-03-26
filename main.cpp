@@ -7,7 +7,7 @@
 using namespace std;
 
 // 맵의 크기 (최소 4, 최대 20)
-#define BOARD_SIZE 20
+#define BOARD_SIZE 5
 // 뱀이 움직이는 딜레이
 #define MOVE_DELAY 15
 
@@ -88,26 +88,35 @@ bool isSnakeOnPosition(int x, int y) {
 // 사과 생성 함수
 void generateApple() {
     appleExists = true;
-    // 빈 공간을 저장할 배열 선언
-    int emptySpaces[(BOARD_SIZE - 2) * (BOARD_SIZE - 2)][2];
-    int emptySpaceCount = 0;
 
-    // 빈 공간 찾기
-    for (int x = 1; x < BOARD_SIZE - 1; ++x) {
-        for (int y = 1; y < BOARD_SIZE - 1; ++y) {
-            if (!isSnakeOnPosition(x, y)) {
-                emptySpaces[emptySpaceCount][0] = x;
-                emptySpaces[emptySpaceCount][1] = y;
-                emptySpaceCount++;
+    // 빈 공간을 찾을 때까지 반복
+    while (true) {
+        // 빈 공간을 저장할 배열 초기화
+        int emptySpaces[(BOARD_SIZE - 2) * (BOARD_SIZE - 2)][2];
+        int emptySpaceCount = 0;
+
+        // 빈 공간 찾기
+        for (int x = 1; x < BOARD_SIZE - 1; ++x) {
+            for (int y = 1; y < BOARD_SIZE - 1; ++y) {
+                if (!isSnakeOnPosition(x, y)) {
+                    emptySpaces[emptySpaceCount][0] = x;
+                    emptySpaces[emptySpaceCount][1] = y;
+                    emptySpaceCount++;
+                }
             }
         }
-    }
 
-    // 랜덤으로 사과 위치 선택
-    if (emptySpaceCount > 0) {
-        int randomIndex = rand() % emptySpaceCount;
-        appleX = emptySpaces[randomIndex][0];
-        appleY = emptySpaces[randomIndex][1];
+        // 빈 공간이 있는 경우에만 사과 위치 선택
+        if (emptySpaceCount > 0) {
+            int randomIndex = rand() % emptySpaceCount;
+            appleX = emptySpaces[randomIndex][0];
+            appleY = emptySpaces[randomIndex][1];
+            break; // 사과를 생성했으므로 반복문 종료
+        } else {
+            // 빈 공간이 없는 경우는 사과를 생성할 수 없으므로 appleExists를 false로 설정하고 종료
+            appleExists = false;
+            break;
+        }
     }
 }
 
@@ -172,7 +181,7 @@ bool isGameOver() {
 // 게임 승리 조건 확인 함수
 bool isWin() {
     // 뱀의 길이가 맵 전체를 차지한 경우
-    if (score == (BOARD_SIZE - 2) * (BOARD_SIZE - 2))
+    if (score == ((BOARD_SIZE - 2) * (BOARD_SIZE - 2)) * 10)
         return true;
 
     return false;
@@ -228,9 +237,8 @@ void drawBoard() {
 
    
     string s = "Score: " + to_string(score);
-    console::draw((BOARD_SIZE - s.length())/2,BOARD_SIZE, s);
+    console::draw(BOARD_SIZE/2 - s.length()/2,BOARD_SIZE, s);
     
-
 }
 
 // 게임 상태에 따라 게임 화면 출력 함수
