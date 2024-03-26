@@ -7,7 +7,7 @@
 using namespace std;
 
 // 맵의 크기 (최소 4, 최대 20)
-#define BOARD_SIZE 5
+#define BOARD_SIZE 10
 // 뱀이 움직이는 딜레이
 #define MOVE_DELAY 15
 
@@ -89,8 +89,7 @@ bool isSnakeOnPosition(int x, int y) {
 void generateApple() {
     appleExists = true;
 
-    // 빈 공간을 찾을 때까지 반복
-    while (true) {
+   
         // 빈 공간을 저장할 배열 초기화
         int emptySpaces[(BOARD_SIZE - 2) * (BOARD_SIZE - 2)][2];
         int emptySpaceCount = 0;
@@ -111,16 +110,12 @@ void generateApple() {
             int randomIndex = rand() % emptySpaceCount;
             appleX = emptySpaces[randomIndex][0];
             appleY = emptySpaces[randomIndex][1];
-            break; // 사과를 생성했으므로 반복문 종료
         } else {
             // 빈 공간이 없는 경우는 사과를 생성할 수 없으므로 appleExists를 false로 설정하고 종료
             appleExists = false;
-            break;
         }
-    }
+    
 }
-
-
 
 void moveSnake() {
 
