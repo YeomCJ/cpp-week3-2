@@ -9,7 +9,7 @@ using namespace std;
 // 맵의 크기 (최소 4, 최대 20)
 #define BOARD_SIZE 20
 // 뱀이 움직이는 딜레이
-#define MOVE_DELAY 5
+#define MOVE_DELAY 15
 
 // 문자열 상수 정의
 #define WALL_VERTICAL_STRING u8"┃"
@@ -21,7 +21,7 @@ using namespace std;
 #define SNAKE_STRING u8"■"
 #define SNAKE_BODY_STRING u8"■"
 #define APPLE_STRING u8"●"
-#define MAX_SNAKE_LENGTH (BOARD_SIZE * BOARD_SIZE)
+#define MAX_SNAKE_LENGTH ((BOARD_SIZE - 2) * (BOARD_SIZE - 2))
 
 // 게임 상태 열거형
 enum class GameState {
@@ -42,7 +42,7 @@ bool appleExists = false;
 int appleX, appleY;
 GameState gameState = GameState::PLAYING;
 
-Snake snakeBody[BOARD_SIZE * BOARD_SIZE];
+Snake snakeBody[(BOARD_SIZE - 2) * (BOARD_SIZE - 2)];
 int snakeLength = 1;
 
 // 뱀의 이동 방향 열거형
@@ -88,17 +88,33 @@ bool isSnakeOnPosition(int x, int y) {
 // 사과 생성 함수
 void generateApple() {
     appleExists = true;
-    do {
-        // 랜덤한 위치에 사과 생성
-        appleX = std::rand() % (BOARD_SIZE - 2) + 1;
-        appleY = std::rand() % (BOARD_SIZE - 2) + 1;
-    } while (isSnakeOnPosition(appleX, appleY));
+    // 빈 공간을 저장할 배열 선언
+    int emptySpaces[(BOARD_SIZE - 2) * (BOARD_SIZE - 2)][2];
+    int emptySpaceCount = 0;
+
+    // 빈 공간 찾기
+    for (int x = 1; x < BOARD_SIZE - 1; ++x) {
+        for (int y = 1; y < BOARD_SIZE - 1; ++y) {
+            if (!isSnakeOnPosition(x, y)) {
+                emptySpaces[emptySpaceCount][0] = x;
+                emptySpaces[emptySpaceCount][1] = y;
+                emptySpaceCount++;
+            }
+        }
+    }
+
+    // 랜덤으로 사과 위치 선택
+    if (emptySpaceCount > 0) {
+        int randomIndex = rand() % emptySpaceCount;
+        appleX = emptySpaces[randomIndex][0];
+        appleY = emptySpaces[randomIndex][1];
+    }
 }
+
 
 
 void moveSnake() {
 
-    int moveCount = 0;
     // 이전 뱀 위치 저장
     Snake prevHead = snake;
     Snake newHead = snake;
@@ -118,13 +134,6 @@ void moveSnake() {
             newHead.x++;
             break;
     }
-
-    moveCount++;
-    // 뱀의 머리가 맵의 범위를 벗어나면 게임 오버
-    
-
-    // 뱀의 머리가 자신의 몸통과 겹치면 게임 오버
-  
 
     // 사과를 먹었을 경우
     if (newHead.x == appleX && newHead.y == appleY) {
@@ -147,11 +156,10 @@ void moveSnake() {
 // 게임 오버 조건 확인 함수
 bool isGameOver() {
     // 맵 밖으로 나갔을 경우
-    if (snake.x <= 0 || snake.x >= BOARD_SIZE - 1 || snake.y <= 0 || snake.y >= BOARD_SIZE - 1)
+   if (snake.x <= 0 || snake.x >= BOARD_SIZE - 1 || snake.y <= 0 || snake.y >= BOARD_SIZE - 1)
         return true;
 
     // 뱀이 자신의 몸통과 겹친 경우
-    // (현재는 단일 뱀이므로 머리와 꼬리만 체크)
     for (int i = 1; i < snakeLength; ++i) {
         if (snake.x == snakeBody[i].x && snake.y == snakeBody[i].y) {
             return true;
@@ -228,8 +236,6 @@ void drawBoard() {
 // 게임 상태에 따라 게임 화면 출력 함수
 void drawGame() {
     console::clear();
-    if (!appleExists)
-        generateApple();
     // 맵 테두리 출력
     drawBoard();
 
@@ -240,7 +246,9 @@ void drawGame() {
 }
 
 void gameLoop() {
+
     while (true) {
+
         // 입력 받기 (방향키 입력 처리)
         if (console::key(console::Key::K_UP) && direction != Direction::DOWN)
             direction = Direction::UP;
@@ -255,9 +263,13 @@ void gameLoop() {
             break;
         }
 
+        if (!appleExists)
+            generateApple();
         // 뱀 이동 처리
-        moveSnake();
-
+        
+        drawGame();
+        for (int i = 0; i < MOVE_DELAY; i++)
+            console::wait();
         // 게임 오버 또는 승리 판정
         if (isGameOver()) {
             gameState = GameState::GAMEOVER;
@@ -287,17 +299,14 @@ void gameLoop() {
             }
         }
 
-        // 화면 업데이트
-        drawGame();
-        for (int i =0; i < MOVE_DELAY; i++)
-            console::wait();
     }
 }
 
 int main() {
+    std::srand(std::time(nullptr));
     // 게임 초기화
     console::init();
-    std::srand(std::time(nullptr));
+    
 
 
     initializeGame();
