@@ -252,20 +252,36 @@ void gameLoop() {
 
     while (true) {
 
-        // 입력 받기 (방향키 입력 처리)
-        if (console::key(console::Key::K_UP) && direction != Direction::DOWN)
-            direction = Direction::UP;
-        else if (console::key(console::Key::K_DOWN) && direction != Direction::UP)
-            direction = Direction::DOWN;
-        else if (console::key(console::Key::K_LEFT) && direction != Direction::RIGHT)
-            direction = Direction::LEFT;
-        else if (console::key(console::Key::K_RIGHT) && direction != Direction::LEFT)
-            direction = Direction::RIGHT;
-        else if (console::key(console::Key::K_ESC)) {
-            exit(0);
-            break;
+        if (snakeLength == 1) {
+            // 입력 받기 (방향키 입력 처리)
+            if (console::key(console::Key::K_UP))
+                direction = Direction::UP;
+            else if (console::key(console::Key::K_DOWN))
+                direction = Direction::DOWN;
+            else if (console::key(console::Key::K_LEFT))
+                direction = Direction::LEFT;
+            else if (console::key(console::Key::K_RIGHT))
+                direction = Direction::RIGHT;
+            else if (console::key(console::Key::K_ESC)) {
+                exit(0);
+                break;
+            }
         }
-
+        else {
+            // 입력 받기 (방향키 입력 처리)
+            if (console::key(console::Key::K_UP) && direction != Direction::DOWN)
+                direction = Direction::UP;
+            else if (console::key(console::Key::K_DOWN) && direction != Direction::UP)
+                direction = Direction::DOWN;
+            else if (console::key(console::Key::K_LEFT) && direction != Direction::RIGHT)
+                direction = Direction::LEFT;
+            else if (console::key(console::Key::K_RIGHT) && direction != Direction::LEFT)
+                direction = Direction::RIGHT;
+            else if (console::key(console::Key::K_ESC)) {
+                exit(0);
+                break;
+            }
+        }
         if (!appleExists)
             generateApple();
         // 뱀 이동 처리
